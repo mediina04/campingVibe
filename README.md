@@ -1,4 +1,5 @@
-CampingVibe
+# Gestor de Reseñas de Campings
+Esta plataforma web permite a los usuarios buscar campings, leer reseñas y calificaciones de otros viajeros, y compartir sus propias experiencias. Con funciones como búsqueda avanzada, filtros personalizados y un mapa interactivo, el proyecto está diseñado para ayudar a los usuarios a encontrar el camping ideal de forma rápida y sencilla.
 
 # Requisitos
 Se recomienda usar Laragon
