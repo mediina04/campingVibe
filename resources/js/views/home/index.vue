@@ -1,212 +1,234 @@
 <template>
-</template>
-<!--
-<template>
-    <div class="demo" id="edit-demo">
-        <div class="viewport" @click="select(null)" @mousedown.capture="blockEvents" @wheel.capture="blockEvents">
-            <screen ref="screen">
-                <g v-for="edge in graph.edges" @click.stop="select(edge)" :key="edge.id">
-                    <edge :class="selection && selection.id === edge.id && 'selected'"
-                          :data="edge"
-                          :nodes="graph.nodes">
-                    </edge>
-                </g>
-                <g v-for="node in graph.nodes" :key="node.id">
-                    <node :data="node" ref="node" :class="isSelected(node) && 'selected'" :textSelect="node.textSelect" :useDrag="node.useDrag">
-                        <div v-html="node.html" @click.stop="select(node)">
-                        </div>
-                    </node>
-                </g>
-            </screen>
+    <div class="home-container">
+      
+      <!-- Sección de Búsqueda -->
+      <section class="search-section">
+        <div class="search-box">
+          <div class="search-title">BÚSQUEDA</div>
+          <div class="search-fields">
+            <input type="text" placeholder="Nombre camping, país, provincia" class="green-placeholder" />
+            <div class="date-inputs">
+              <input type="date" placeholder="Llegada" class="green-placeholder" />
+              <input type="date" placeholder="Salida" class="green-placeholder" />
+            </div>
+            <input type="number" placeholder="Personas" class="green-placeholder" />
+            <button class="web-button">BUSCAR</button>
+          </div>
         </div>
-        <div class="sidebar">
-            <codemirror v-model="editText" :options="{
-          mode: 'text/javascript',
-          theme: 'default',
-          lineWrapping: true,
-          scrollbarStyle: null,
-          styleActiveLine: true,
-          line: true,
-        }"
-                        style="font-size: 13.3333px; font-family: monospace; -webkit-text-size-adjust: 100%; height: 100%"
-            ></codemirror>
+      </section>
+  
+      <!-- Sección de Campings Destacados -->
+      <section class="featured-campings">
+        <h2>CAMPINGS DESTACADOS</h2>
+        <div class="campings-list">
+          <div class="camping-card" v-for="camping in campings" :key="camping.id">
+            <img :src="camping.image" alt="Camping Image" />
+            <div class="camping-info">
+              <h3>{{ camping.name }}</h3>
+              <p>{{ camping.address }}</p>
+              <p class="rating"> {{ camping.rating }} / 5</p>
+              <p class="price">Desde {{ camping.price }} € noche</p>
+              <button class="web-button">WEB CAMPING</button>
+            </div>
+          </div>
         </div>
+      </section>
+  
+      <!-- Pie de Página -->
+      <footer class="footer">
+        <div class="about">
+          <h3>ACERCA DE</h3>
+          <p>Somos una plataforma dedicada a conectar a los amantes del camping con los mejores destinos...</p>
+        </div>
+        <div class="contact">
+          <h3>CONTACTO</h3>
+          <p>contacto@campingvibe.com</p>
+          <p>+34 623 456 789</p>
+          <button class="web-button">Mensaje</button>
+        </div>
+      </footer>
     </div>
-</template>
-
-<script>
-import Screen from '../components/Screen.vue'
-import Node from '../components/Node.vue'
-import Edge from '../components/Edge.vue'
-import graph from '../graph'
-import pretty from 'pretty'
-import stringify from 'javascript-stringify'
-import { Codemirror } from 'vue-codemirror'
-// import 'codemirror/mode/javascript/javascript.js'
-// import 'codemirror/lib/codemirror.css'
-
-export default {
-    components: {
-        Screen,
-        Node,
-        Edge,
-        Codemirror
-    },
+  </template>
+  
+  <script>
+  export default {
     data() {
-        return {
-            graph: new graph(),
-            selection: null,
-            editText: '/* click on a node or edge to start editing */',
-        }
-    },
-    methods: {
-        select (obj) {
-            this.selection = obj
-            if (!this.selection) {
-                this.editText = '/* click on a node or edge to start editing */'
-                return
-            }
-            const editText = { ...obj }
-            delete editText.pathd
-            if (editText.html) {
-                editText.html = "\n" + pretty(editText.html) + "\n"
-            }
-            this.editText = stringify(editText, null, 2)
-                .replace(/\\n/g, "\n")
-                .replace(/html: '([^]*)\s'/g, 'html: `$1\n`')
-        },
-        applyChanges () {
-            if (!this.selection) {
-                return
-            }
-            try {
-                const edit = eval('('+this.editText+')')
-                Object.assign(this.selection, edit)
-                this.$nextTick(() => {
-                    this.$refs.node.forEach(node => {
-                        node.fitContent()
-                    })
-                })
-            } catch (_) {
-                console.log('TODO invalid code')
-            }
-        },
-        isSelected (node) {
-            return this.selection
-                && this.selection.id === node.id
-        },
-        /**
-         * HACKS
-         * support shortcut .no-drag and .no-wheel classes
-         * to disable dragging and mouse-wheel behavior from editable html
-         */
-        blockEvents (e) {
-            const path = e.path || e.composedPath?.();
-            if (path?.find(el => el.classList?.contains('no-drag'))) { // @mousedown
-                const pz = this.$refs.screen.panzoom
-                pz.options.preventMouseEventsDefault = false // enable default events (text select, input click)
-                document.addEventListener('mouseup', () => {
-                    pz.options.preventMouseEventsDefault = true
-                }, { once: true })
-                e.stopPropagation() // disable node drag
-            }
-            if (path?.find(el => el.classList?.contains('no-wheel'))) { // @wheel
-                e.stopPropagation() // disable wheel zoom
-            }
-        },
-    },
-    mounted () {
-        this.graph.createNode({
-            id: 'a',
-            html: '<h5>A</h5>'
-        })
-        this.graph.createNode({
-            id: 'b',
-            x: 200,
-            y: 200,
-            textSelect: false,
-            useDrag: true,
-            html:
-                `<div><h4>B</h4><p>Subtitle</p><button>Yo</button></div>`
-        })
-        this.graph.createNode({
-            id: 'c',
-            x: -100,
-            y: 150,
-            textSelect: false,
-            useDrag: true,
-            html: `<div> <h4>okay</h4> <textarea type="text" class="no-drag">Some text here</textarea><br/><select class="no-drag" name="cars" id="cars"><option value="volvo">Volvo</option><option value="saab">Saab</option><option value="mercedes">Mercedes</option><option value="audi">Audi</option></select></div>`
-        })
-        this.graph.createNode({
-            id: 'd',
-            x: 340,
-            textSelect: false,
-            useDrag: true,
-            html: `<div>Okay</div>`
-        })
-        this.graph.createEdge({
-            id: 'a:b',
-            from: 'a',
-            to: 'b',
-            toAnchor: { x: '50%', y: '50%', snap: 'rect' },
-            type: 'smooth'
-        })
-        this.graph.createEdge({ id: 'c:d', from: 'c', to: 'd', type: 'smooth' })
-        this.$nextTick(() => {
-            this.$refs.screen.zoomNodes(this.graph.nodes, {scale: 1})
-        })
-    },
-    watch: {
-        editText: 'applyChanges',
-    },
-}
-</script>
+      return {
+        campings: [
+          {
+            id: 1,
+            name: "Tamarit Beach Resort",
+            address: "Carretera N-340A, Km 1.172, 43008 Tarragona",
+            rating: 4.5,
+            price: 44,
+            image: "/images/tamarit.png"
+          },
+          {
+            id: 2,
+            name: "Camping & Resort Sangulí Salou",
+            address: "Vial de Cavet T-325, 43840 Salou, Tarragona",
+            rating: 4.8,
+            price: 120,
+            image: "/images/sanguli.png"
+          },
+          {
+            id: 3,
+            name: "Camping Capfun - El Escorial",
+            address: "M-600, km 3, 500, 28280 El Escorial, Madrid",
+            rating: 4.3,
+            price: 28,
+            image: "/images/escorial.png"
+          }
+        ]
+      };
+    }
+  };
+  </script>
+  
+  <style scoped>
+  .home-container {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #ffffff;
+  }
 
-<style>
-#edit-demo .CodeMirror {
-    width: 100%;
-    height: 500px;
-    margin: 0;
-    overflow: hidden;
-    position: relative;
-    background-color: #f1f1f1;
-    border: 1px solid #f1f1f1;
-}
-#edit-demo .node .background {
-    /* background-color: #ccc; */
-}
-
-#edit-demo .node .content > div {
+  .search-section {
+    background: url('/images/fondo-busq.png') no-repeat center center/cover;
     padding: 25px;
+    margin-top: 0;
+    width: 100vw;
+    height: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .search-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 80%;
+    max-width: 1200px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .search-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #00bf63;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .search-fields {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .search-box input {
+    padding: 10px;
+    border: 2px solid #00bf63;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    font-weight: normal;
+    color: #00bf63;
+    width: 100%;
+  }
+
+  .green-placeholder::placeholder {
+    color: #00bf63;
+  }
+
+  .date-inputs {
+    display: flex;
+    gap: 0;
+  }
+
+  .date-inputs input {
+    width: 48%;
+    padding: 10px;
+    border-radius: 0;
+    border-left: none;
+  }
+
+  .date-inputs input:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-left: 2px solid #00bf63;
+  }
+
+  .date-inputs input:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+
+.web-button {
+  background: #00bf63;
+  color: white;
+  font-weight: bold;
+  border: 2px solid #00bf63;
+  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 10px;
+  transition: 0.3s ease;
 }
 
-#edit-demo .node .content h4,h5,p {
-    margin: 0
+.web-button:hover {
+  background: white;
+  color: #00bf63;
+  border: 2px solid #00bf63;
 }
-
-#edit-demo .node:hover .background {
-    background-color: rgb(90 200 90);
-}
-
-#edit-demo .node.selected .content {
-    background-color: rgba(100, 200, 100, 1);
-    box-shadow: 0px 0px 0px 2px #333;
-}
-
-#edit-demo .node .content {
-    cursor: pointer;
-}
-
-#edit-demo .edge {
-    cursor: pointer;
-}
-#edit-demo .edge:hover {
-    /* stroke-width: 4 */
-    stroke: rgb(90 200 90)
-}
-#edit-demo .edge.selected {
-    /* stroke-width: 4 */
-    stroke: #333
-}
-</style>
--->
+  
+  .featured-campings {
+    margin: 20px;
+    text-align: left;
+  }
+  
+  .campings-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .camping-card {
+    background: white;
+    margin: 10px;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: left;
+  }
+  
+  .camping-card img {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
+  .price {
+    color: #00bf63;
+    font-weight: bold;
+  }
+  
+  .footer {
+    display: flex;
+    justify-content: space-around;
+    background: #00bf63;
+    color: white;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  .contact-button {
+    background: #00bf63;
+  }
+  </style>
+  
