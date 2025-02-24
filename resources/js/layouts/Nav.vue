@@ -14,9 +14,6 @@
                         <li class="nav-item">
                             <router-link to="/" class="nav-link" aria-current="page">{{ $t('home') }}</router-link>
                         </li>
-                        <li class="nav-item">
-                            <router-link :to="{ name : 'public-posts.index'}" class="nav-link">Blog</router-link>
-                        </li>
                     <template v-if="!authStore().user?.name">
                         <li class="nav-item">
                             <router-link class="nav-link" to="/login"
