@@ -32,7 +32,7 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <router-link to="/user" class="nav-link d-flex align-items-center">
+                        <router-link to="/resources/js/layouts/Guest.vue" class="nav-link d-flex align-items-center">
                             <img src="/images/icon-user.png" alt="User Icon" class="nav-user-icon">
                         </router-link>
                     </li>

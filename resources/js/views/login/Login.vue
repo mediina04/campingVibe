@@ -1,75 +1,105 @@
 <template>
-    <div class="flex h-screen bg-[#00C853]">
-        <!-- Sección Izquierda - Formulario -->
-        <div class="w-1/3 flex flex-col justify-center items-center px-10">
-            <div class="text-white text-4xl font-bold mb-8 flex items-center">
-                <img src="/images/icon-logo-CampingVibe.png" alt="Logo" class="h-12 mr-3" />
-                <span>Camping <span class="text-green-200">VIBE</span></span>
+    <div class="flex h-screen" style="background-color: #00BF63;">
+        <!-- Left Section: Logo and Form -->
+        <div class="w-1/3 flex flex-col justify-center items-center text-white p-10">
+            <!-- Logo -->
+            <div class="logo-container">
+                <img src="images/icon-logo-CampingVibe.png" alt="Camping Vibe Logo" class="logo" />
             </div>
-            <form @submit.prevent="submitLogin" class="w-full space-y-5">
-                <div class="relative">
-                    <input v-model="loginForm.email" id="email" type="email" required 
-                           class="w-full pl-12 px-4 py-3 rounded-lg bg-white text-gray-800 focus:outline-none shadow-md"
-                           placeholder="Email" />
-                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-green-600">
-                        <i class="fas fa-user"></i>
-                    </span>
-                    <div v-if="validationErrors?.email" class="text-red-500 text-sm mt-1">
-                        <div v-for="message in validationErrors.email">{{ message }}</div>
+            
+            <!-- Form -->
+            <div class="w-full max-w-xs">
+                <form @submit.prevent="submitLogin" class="space-y-4">
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium">Email</label>
+                        <input v-model="loginForm.email" id="email" type="email" class="input-field" required autofocus autocomplete="username">
+                        <div class="error-text" v-for="message in validationErrors?.email">{{ message }}</div>
                     </div>
-                </div>
-                <div class="relative">
-                    <input v-model="loginForm.password" id="password" type="password" required 
-                           class="w-full pl-12 px-4 py-3 rounded-lg bg-white text-gray-800 focus:outline-none shadow-md"
-                           placeholder="Contraseña" />
-                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-green-600">
-                        <i class="fas fa-lock"></i>
-                    </span>
-                    <div v-if="validationErrors?.password" class="text-red-500 text-sm mt-1">
-                        <div v-for="message in validationErrors.password">{{ message }}</div>
+                    
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium">Contraseña</label>
+                        <input v-model="loginForm.password" id="password" type="password" class="input-field" required autocomplete="current-password">
+                        <div class="error-text" v-for="message in validationErrors?.password">{{ message }}</div>
                     </div>
+                    
+                    <!-- Forgot Password -->
+                    <div class="text-right text-sm">
+                        <router-link :to="{name: 'auth.forgot-password'}" class="text-white hover:underline">¿Contraseña Perdida?</router-link>
+                    </div>
+                    
+                    <!-- Login Button -->
+                    <button class="login-button" :class="{'opacity-50': processing}" :disabled="processing">
+                        Iniciar Sesión
+                    </button>
+                </form>
+                
+                <!-- Register Link -->
+                <div class="mt-4 text-sm text-center">
+                    <router-link :to="{name: 'auth.register'}" class="text-white hover:underline">Crea tu cuenta</router-link>
                 </div>
-                <div class="text-white text-sm text-left">
-                    <router-link :to="{name: 'auth.forgot-password'}" class="underline">¿Contraseña Perdida?</router-link>
-                </div>
-                <button type="submit" class="w-full bg-white text-[#00C853] py-3 rounded-lg font-bold shadow-lg hover:bg-green-100 transition">
-                    LOG IN
-                </button>
-                <div class="text-white text-sm text-center mt-3">
-                    <router-link :to="{name: 'auth.register'}" class="underline">Crea tu cuenta</router-link>
-                </div>
-            </form>
+            </div>
         </div>
         
-        <!-- Sección Derecha - Imágenes -->
-        <div class="w-2/3 grid grid-cols-2 gap-4 p-10">
-            <img src="/images/img1-login.png" class="rounded-lg w-full h-40 object-cover shadow-lg" />
-            <img src="/images/img2-login.png" class="rounded-lg w-full h-40 object-cover shadow-lg" />
-            <img src="/images/img3-login.png" class="rounded-lg w-full h-40 object-cover shadow-lg" />
-            <img src="/images/img4-login.png" class="rounded-lg w-full h-40 object-cover shadow-lg" />
+        <!-- Right Section: Images (To be implemented later) -->
+        <div class="w-2/3 bg-cover bg-center" style="background-image: url('/background-image.jpg');">
+            <!-- Aquí irán las imágenes -->
         </div>
     </div>
 </template>
 
 <script setup>
 import useAuth from '@/composables/auth';
-const { loginForm, validationErrors, submitLogin } = useAuth();
+const { loginForm, validationErrors, processing, submitLogin } = useAuth();
 </script>
 
 <style scoped>
-.shadow-md {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.shadow-lg {
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-}
-.transition {
-    transition: background-color 0.3s ease;
+.logo-container { 
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
-/* Ajuste del tamaño de las imágenes */
-.grid img {
-    height: 10rem; /* Reduce la altura de las imágenes */
-    object-fit: cover;
+/* Ajusta el tamaño del logo */
+.logo {
+    height: 80px;
+}
+
+/* Estiliza los inputs */
+.input-field {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    color: #333;
+    outline: none;
+    border: none;
+    font-size: 14px;
+    transition: box-shadow 0.3s ease;
+}
+
+.input-field:focus {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.error-text {
+    color: #FF4D4D;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.login-button {
+    width: 100%;
+    background-color: white;
+    color: #00BF63;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.login-button:hover {
+    background-color: #f0f0f0;
 }
 </style>

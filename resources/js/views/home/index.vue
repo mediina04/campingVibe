@@ -59,32 +59,6 @@
       <!-- Barra separadora -->
       <div class="footer-divider"></div>
 
-      <!-- Pie de Página -->
-      <footer class="footer">
-        <div class="footer-column">
-          <h3>ACERCA DE</h3>
-          <p>Somos una plataforma dedicada a conectar a los amantes del camping con los mejores destinos. Encuentra, reserva y comparte experiencias en campings de toda la región con facilidad y confianza.</p>
-        </div>
-
-        <div class="footer-column">
-          <h3>CONTACTO</h3>
-          <p>contacto@campingvibe.com</p>
-          <p>+34 623 456 789</p>
-          <p>¿Tienes dudas o sugerencias?</p>
-          <textarea class="footer-message" placeholder="Escribe tu mensaje..."></textarea>
-        </div>
-
-        <div class="footer-column footer-logo">
-          <img src="/images/icon-logo-green.png" alt="Camping Vibe">
-          <div class="social-icons">
-            <img src="/images/icon-instagram.png" alt="Instagram">
-            <img src="/images/icon-linkedin.png" alt="LinkedIn">
-            <img src="/images/icon-x.png" alt="Twitter">
-            <img src="/images/icon-facebook.png" alt="Facebook">
-          </div>
-        </div>
-      </footer>
-
     </div>
   </template>
   
@@ -356,81 +330,6 @@ export default {
   height: 3px;
   background-color: #00bf63;
   margin: 20px auto;
-}
-
-/* Footer */
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start; /* Alinea el contenido arriba y a la izquierda */
-  padding: 30px 10%;
-  background: white;
-  color: black;
-}
-
-/* Columnas del footer */
-.footer-column {
-  flex: 1;
-  text-align: left; /* Alineación de texto a la izquierda */
-}
-
-/* Títulos en verde */
-.footer h3 {
-  color: #00bf63;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-/* Input para mensajes */
-.footer-message {
-  width: 100%;
-  max-width: 250px;
-  height: 40px;
-  padding: 8px;
-  border: 2px solid #00bf63;
-  border-radius: 5px;
-  outline: none;
-  resize: none;
-  font-size: 14px;
-}
-
-.footer-message::placeholder {
-  color: #00bf63;
-}
-
-.footer-message:focus {
-  border-color: #008f4f;
-}
-
-/* Logo y redes sociales alineados a la izquierda */
-.footer-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* Alinea todo el contenido a la izquierda */
-}
-
-.footer-logo img {
-  width: 140px;
-  display: block;
-  margin-bottom: 15px;
-}
-
-.social-icons {
-  display: flex;
-  justify-content: left;
-  gap: 10px;
-}
-
-
-.social-icons img {
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.social-icons img:hover {
-  transform: scale(1.1);
 }
 
   </style>

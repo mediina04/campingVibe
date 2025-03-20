@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PermissionController;
@@ -51,3 +52,9 @@ Route::get('category-list', [CategoryController::class, 'getList']);
 Route::get('get-posts', [PostControllerAdvance::class, 'getPosts']);
 Route::get('get-category-posts/{id}', [PostControllerAdvance::class, 'getCategoryByPosts']);
 Route::get('get-post/{id}', [PostControllerAdvance::class, 'getPost']);
+
+Route::get('note', [NoteController::class, 'index'])->name('note.index');
+Route::post('note', [NoteController::class, 'store'])->name('note.store');
+Route::get('note/{id}', [NoteController::class, 'show'])->name('note.show');
+Route::put('note/{id}', [NoteController::class, 'update'])->name('note.update');
+Route::delete('note/{id}', [NoteController::class, 'destroy'])->name('note.destroy');
