@@ -2,19 +2,19 @@ import { authStore } from "../store/auth";
 
 const AuthenticatedLayout = () => import('../layouts/Authenticated.vue')
 const AuthenticatedUserLayout = () => import('../layouts/AuthenticatedUser.vue')
-const GuestLayout = ()  => import('../layouts/Guest.vue');
-const PostsIndex  = ()  => import('../views/admin/posts/Index.vue');
-const PostsCreate  = ()  => import('../views/admin/posts/Create.vue');
-const PostsEdit  = ()  => import('../views/admin/posts/Edit.vue');
+const GuestLayout = () => import('../layouts/Guest.vue');
+const PostsIndex = () => import('../views/admin/posts/Index.vue');
+const PostsCreate = () => import('../views/admin/posts/Create.vue');
+const PostsEdit = () => import('../views/admin/posts/Edit.vue');
 
 async function requireLogin(to, from, next) {
     const auth = authStore();
     let isLogin = !!auth.authenticated;
 
     if (isLogin) {
-        next()
+        next();
     } else {
-        next('/login')
+        next('/login');
     }
 }
 
@@ -26,32 +26,32 @@ function hasAdmin(roles) {
     }
     return false;
 }
-async function guest(to, from, next) {
-    const auth = authStore()
 
+async function guest(to, from, next) {
+    const auth = authStore();
+    
     let isLogin = !!auth.authenticated;
 
     if (isLogin) {
-        next('/')
+        next('/');
     } else {
-        next()
+        next();
     }
 }
 
 async function requireAdmin(to, from, next) {
-
     const auth = authStore();
     let isLogin = !!auth.authenticated;
     let user = auth.user;
 
     if (isLogin) {
-        if( hasAdmin(user.roles)){
-            next()
-        }else{
-            next('/app')
+        if (hasAdmin(user.roles)) {
+            next();
+        } else {
+            next('/app');
         }
     } else {
-        next('/login')
+        next('/login');
     }
 }
 
@@ -66,6 +66,16 @@ export default [
                 path: '/',
                 name: 'home',
                 component: () => import('../views/home/index.vue'),
+            },
+            {
+                path: 'search-results',
+                name: 'searchResults',
+                component: () => import('../views/campings/searchResults.vue'),
+            },
+            {
+                path: '/campings/:id',
+                name: 'campings.show',
+                component: () => import('../views/campings/ShowCampings.vue')
             },
             {
                 path: 'posts',
@@ -112,14 +122,19 @@ export default [
     {
         path: '/app',
         component: AuthenticatedUserLayout,
-        // redirect: {
-        //     name: 'admin.index'
-        // },
         name: 'app',
         beforeEnter: requireLogin,
-        meta: { breadCrumb: 'Dashboard' }
+        meta: { breadCrumb: 'Dashboard' },
+        children: [
+            {
+                path: 'perfil',
+                name: 'user.profile',
+                component: () => import('../views/user/Profile.vue'),
+                meta: { breadCrumb: 'Perfil' }
+            },
+            // otras rutas como 'dashboard', 'admin.index', etc.
+        ]
     },
-
 
     {
         path: '/admin',

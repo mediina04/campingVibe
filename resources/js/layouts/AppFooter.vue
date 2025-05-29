@@ -1,14 +1,3 @@
-<script setup>
-import { useLayout } from '../composables/layout';
-import { computed } from 'vue';
-
-const { layoutConfig } = useLayout();
-
-const logoUrl = computed(() => {
-    return `layout/images/${layoutConfig.darkTheme.value ? 'logo-white' : 'logo-dark'}.svg`;
-});
-</script>
-
 <template>
     <footer class="footer">
         <div class="footer-column">
@@ -25,7 +14,7 @@ const logoUrl = computed(() => {
         </div>
 
         <div class="footer-column footer-logo">
-            <img :src="logoUrl" alt="Logo">
+            <img src="/images/icon-logo-green.png" alt="Logo">
             <div class="social-icons">
                 <img src="/images/icon-instagram.png" alt="Instagram">
                 <img src="/images/icon-linkedin.png" alt="LinkedIn">
@@ -107,3 +96,13 @@ const logoUrl = computed(() => {
 }
 </style>
 
+<script setup>
+import { useLayout } from '../composables/layout';
+import { computed } from 'vue';
+
+const { layoutConfig } = useLayout();
+
+const logoUrl = computed(() => {
+    return `layout/images/${layoutConfig.darkTheme.value ? 'logo-white' : 'logo-dark'}.svg`;
+});
+</script>

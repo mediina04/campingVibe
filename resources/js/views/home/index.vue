@@ -3,19 +3,33 @@
       
       <!-- Sección de Búsqueda -->
       <section class="search-section">
-        <div class="search-box">
-          <div class="search-title">BÚSQUEDA</div>
-          <div class="search-fields">
-            <input type="text" placeholder="Nombre camping, país, provincia" class="green-placeholder" />
-            <div class="date-inputs">
-              <input type="date" placeholder="Llegada" class="green-placeholder" />
-              <input type="date" placeholder="Salida" class="green-placeholder" />
-            </div>
-            <input type="number" placeholder="Personas" class="green-placeholder" />
-            <button class="web-button">BUSCAR</button>
+      <div class="search-box">
+        <div class="search-title">BÚSQUEDA</div>
+        <div class="search-fields">
+          <input v-model="searchQuery" type="text" placeholder="Nombre camping, país, provincia" />
+          <div class="date-inputs">
+            <input
+              v-model="arrivalDate"
+              type="text"
+              placeholder="Fecha llegada"
+              @focus="typeArrival = 'date'"
+              @blur="typeArrival = 'text'"
+              :type="typeArrival"
+            />
+            <input
+              v-model="departureDate"
+              type="text"
+              placeholder="Fecha salida"
+              @focus="typeDeparture = 'date'"
+              @blur="typeDeparture = 'text'"
+              :type="typeDeparture"
+            />
           </div>
+          <input v-model="people" type="number" placeholder="Personas" />
+          <button class="web-button" @click="goToSearchResults">BUSCAR</button>
         </div>
-      </section>
+      </div>
+    </section>
   
       <div class="campings-container">
     <!-- Sección de Campings Destacados -->
@@ -58,11 +72,19 @@
   
       <!-- Barra separadora -->
       <div class="footer-divider"></div>
-
+      
     </div>
   </template>
   
   <script>
+  import { useRouter } from 'vue-router'
+  import Navbar from '@/layouts/Nav.vue'
+  import Footer from '@/layouts/AppFooter.vue'
+const router = useRouter()
+
+function goToSearchResults() {
+  router.push({ name: 'searchResults' })
+}
 export default {
   data() {
     return {
@@ -91,10 +113,17 @@ export default {
           price: 28,
           image: "/images/escorial.png"
         }
-      ]
+      ],
+      searchQuery: '',
+      arrivalDate: '',
+      departureDate: '',
+      people: '',
+      typeArrival: 'text',
+      typeDeparture: 'text'
     };
-  }
+  },
 };
+
 </script>
   
   <style scoped>
@@ -151,7 +180,7 @@ export default {
     outline: none;
     font-size: 14px;
     font-weight: normal;
-    color: #00bf63;
+    color: black;
     width: 100%;
     gap: 15px;
   }
@@ -167,9 +196,20 @@ export default {
       margin-left: -10px;
   }
 
-  .green-placeholder::placeholder {
-    color: #00bf63;
-  }
+  /* Aplica el color verde a todos los placeholders de los inputs de búsqueda */
+.search-fields input::placeholder {
+  color: #00bf63;
+  opacity: 1;
+}
+.search-fields input::-webkit-input-placeholder {
+  color: #00bf63;
+}
+.search-fields input:-ms-input-placeholder {
+  color: #00bf63;
+}
+.search-fields input::-ms-input-placeholder {
+  color: #00bf63;
+}
 
   .date-inputs {
     display: flex;
@@ -193,6 +233,20 @@ export default {
   .date-inputs input:last-child {
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
+  }
+
+  .date-inputs input::placeholder {
+    color: #00bf63;
+    opacity: 1;
+  }
+  .date-inputs input::-webkit-input-placeholder {
+    color: #00bf63;
+  }
+  .date-inputs input:-ms-input-placeholder {
+    color: #00bf63;
+  }
+  .date-inputs input::-ms-input-placeholder {
+    color: #00bf63;
   }
 
 .web-button {
@@ -333,4 +387,3 @@ export default {
 }
 
   </style>
-  
