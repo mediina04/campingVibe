@@ -18,9 +18,46 @@ class CampingController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
-        $campings = Camping::all();
+        $query = Camping::query();
+
+        // Búsqueda flexible por nombre, ciudad o provincia
+        if ($request->filled('q')) {
+            $q = trim($request->input('q'));
+            $query->where(function($sub) use ($q) {
+                $sub->where('name', 'like', "%$q%")
+                    ->orWhere('location', 'like', "%$q%");
+            });
+        }
+
+        // Validación sencilla de fechas
+        if ($request->filled('arrival') && $request->filled('departure')) {
+            $arrival = $request->input('arrival');
+            $departure = $request->input('departure');
+            $today = now()->toDateString();
+
+            // Si alguna fecha es anterior a hoy o llegada es posterior/simultánea a salida, error
+            if ($arrival < $today || $departure < $today || $arrival >= $departure) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Las fechas seleccionadas no son válidas.'
+                ], 422);
+            }
+        }
+
+        // No filtramos por fechas ni personas, solo validamos
+
+        // Justo antes de $campings = $query->get()->map(...)
+        // dd($query->toSql(), $query->getBindings());
+
+        $campings = $query->get()->map(function ($camping) {
+            $images = $camping->images;
+            $camping->setAttribute('image', $images && count($images) > 0
+                ? asset($images[0])
+                : asset('images/default-camping.jpg'));
+            return $camping;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -109,4 +146,29 @@ class CampingController extends Controller
             'description' => 'nullable|string',
         ];
     }
+
+    public function destacados()
+    {
+        $campings = Camping::inRandomOrder()->take(5)->get()->map(function ($camping) {
+            // El campo images ya es un array gracias al cast
+            $images = $camping->images;
+
+            // Tomamos la primera imagen o una por defecto
+            $camping->image = $images && count($images) > 0
+                ? asset($images[0])
+                : asset('images/default-camping.jpg');
+
+            return $camping;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $campings
+        ]);
+    }
+
+
+
+
+
 }

@@ -14,7 +14,9 @@ class Reservation extends Model
         'accommodation_id',
         'check_in',
         'check_out',
-        'number_of_guests',
+        'guests',
+        'total_price',
+        'status',
     ];
 
     public function user()

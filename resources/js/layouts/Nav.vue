@@ -21,18 +21,30 @@
                         </li>
                     </template>
                     <li v-if="authStore().user?.name" class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a
+                            class="nav-link dropdown-toggle d-flex align-items-center fw-bold text-success"
+                            href="#"
+                            role="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <span style="text-transform: capitalize;">
                             {{ authStore().user?.name }}
+                            </span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><router-link class="dropdown-item" to="/admin">Admin</router-link></li>
-                            <li><router-link to="/admin/posts" class="dropdown-item">Post</router-link></li>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                            <li><router-link class="dropdown-item" to="/admin">Panel de Admin</router-link></li>
+                            <li><router-link class="dropdown-item" to="/admin/posts">Posts</router-link></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" @click="logout">Logout</a></li>
+                            <li>
+                            <a class="dropdown-item text-danger fw-semibold" href="javascript:void(0)" @click="logout">
+                                Cerrar sesión
+                            </a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <router-link to="/resources/js/layouts/Guest.vue" class="nav-link d-flex align-items-center">
+                        <router-link :to="{ name: 'user.profile' }" class="nav-link d-flex align-items-center">
                             <img src="/images/icon-user.png" alt="User Icon" class="nav-user-icon">
                         </router-link>
                     </li>

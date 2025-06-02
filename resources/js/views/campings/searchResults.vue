@@ -1,335 +1,321 @@
 <template>
-  <div class="home-container">
-    
-    <!-- Sección de Búsqueda -->
-    <section class="search-section">
-    <div class="search-box">
-      <div class="search-title">BÚSQUEDA</div>
-      <div class="search-fields">
-        <input v-model="searchQuery" type="text" placeholder="Nombre camping, país, provincia" />
-        <div class="date-inputs">
-          <input v-model="arrivalDate" type="date" />
-          <input v-model="departureDate" type="date" />
-        </div>
-        <input v-model="people" type="number" placeholder="Personas" />
-        <button class="web-button" @click="searchCampings">BUSCAR</button>
+  <div class="search-results-root">
+    <!-- Barra de búsqueda centrada -->
+    <div class="search-bar">
+      <span class="search-label">TU BÚSQUEDA:</span>
+      <input v-model="searchQuery" type="text" class="search-input" />
+      <div class="date-inputs">
+        <input v-model="arrivalDate" type="text" class="search-input date-left" placeholder="" />
+        <input v-model="departureDate" type="text" class="search-input date-right" placeholder="" />
       </div>
+      <input v-model="people" type="text" class="search-input" />
+      <button class="search-btn">BUSCAR</button>
     </div>
-  </section>
 
-    <div class="campings-container">
-  <!-- Sección de Campings Destacados -->
-  <section class="featured-campings">
-    <h2 class="section-title">CAMPINGS DESTACADOS</h2>
-    <div class="campings-content">
-      <div class="campings-list">
-        <div class="camping-card" v-for="camping in campings" :key="camping.id">
-          <img :src="camping.image" :alt="camping.name" class="camping-image" />
-          <div class="camping-info">
-            <h3 class="camping-name">{{ camping.name }}</h3>
-            <p class="camping-address">{{ camping.address }}</p>
-            <p class="camping-rating"><strong>{{ camping.rating }} / 5</strong></p>
-          </div>
-          <div class="camping-price">
-            <p class="price-text">Desde <strong>{{ camping.price }} €</strong> noche</p>
-            <button class="web-button">WEB CAMPING</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Barra separadora -->
-      <div class="separator-bar"></div>
-
-      <!-- Mapa -->
-      <div class="map-container">
+    <div class="main-content">
+      <!-- Mapa a la izquierda -->
+      <div class="map-section">
         <iframe
           width="100%"
           height="100%"
           frameborder="0"
           style="border:0"
           referrerpolicy="no-referrer-when-downgrade"
-          src="https://www.google.com/maps/embed/v1/place?key=TU_CLAVE_API&q=España"
+          src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBwoXNHQAsvDqvdG3qJ0-MGYieC85E8T8E&q=Barcelona"
           allowfullscreen>
         </iframe>
       </div>
+      <!-- Resultados a la derecha -->
+      <div class="results-section">
+        <div class="campings-list">
+          <div
+            class="camping-card"
+            v-for="camping in campings"
+            :key="camping.id"
+            @click="$router.push({ name: 'campings.show', params: { id: camping.id } })"
+            style="cursor:pointer"
+          >
+            <img :src="camping.image" :alt="camping.name" class="camping-image" />
+            <div class="camping-info">
+              <h3 class="camping-name">{{ camping.name }}</h3>
+              <p class="camping-address">{{ camping.location }}</p>
+              <p class="camping-rating"><strong>{{ camping.rating ?? 'N/A' }} / 5</strong></p>
+            </div>
+            <div class="camping-price">
+              <p class="price-text">
+                Desde <strong>{{ camping.price ?? 'Consultar' }} €</strong> noche
+              </p>
+              <a
+                v-if="camping.web"
+                :href="camping.web"
+                target="_blank"
+                class="web-button"
+              >WEB CAMPING</a>
+              <button
+                v-else
+                class="web-button"
+                disabled
+                style="opacity: 0.5; cursor: not-allowed;"
+              >WEB NO DISPONIBLE</button>
+            </div>
+          </div>
+        </div>
+        <!-- Paginación -->
+        <div class="pagination">
+          <button @click="prevPage" :disabled="currentPage === 1">&lt;</button>
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            :class="{ active: currentPage === page }"
+            @click="goToPage(page)"
+          >{{ page }}</button>
+          <button @click="nextPage" :disabled="currentPage === totalPages">&gt;</button>
+        </div>
+      </div>
     </div>
-  </section>
-</div>
 
-    <!-- Barra separadora -->
     <div class="footer-divider"></div>
-
+    <Footer />
   </div>
 </template>
 
 <script>
+import Footer from '@/layouts/AppFooter.vue'
+
 export default {
-data() {
-  return {
-    campings: [
-      {
-        id: 1,
-        name: "Tamarit Beach Resort",
-        address: "Carretera N-340A. Km 1.172, 43008 Tarragona.",
-        rating: 4.5,
-        price: 44,
-        image: "/images/tamarit.png"
-      },
-      {
-        id: 2,
-        name: "Camping & Resort Sangulí Salou",
-        address: "Vial de Cavet (T-325), 43840 Salou, Tarragona",
-        rating: 4.8,
-        price: 120,
-        image: "/images/sanguli.png"
-      },
-      {
-        id: 3,
-        name: "Camping Capfun - El Escorial",
-        address: "M-600, km 3, 500, 28280 El Escorial, Madrid",
-        rating: 4.3,
-        price: 28,
-        image: "/images/escorial.png"
+  components: { Footer },
+  data() {
+    return {
+      campings: [],
+      searchQuery: '',
+      arrivalDate: '',
+      departureDate: '',
+      people: '',
+      currentPage: 1,
+      perPage: 5
+    };
+  },
+  computed: {
+    paginatedCampings() {
+      const start = (this.currentPage - 1) * this.perPage;
+      return this.campings.slice(start, start + this.perPage);
+    },
+    totalPages() {
+      return Math.ceil(this.campings.length / this.perPage);
+    }
+  },
+  mounted() {
+    this.fetchCampings();
+  },
+  methods: {
+    async fetchCampings() {
+      try {
+        const response = await fetch("http://localhost:8000/api/campings");
+        const json = await response.json();
+
+        this.campings = json.data.map(camping => ({
+          ...camping,
+          address: camping.location || 'Dirección no disponible',
+          image: camping.image || '/images/default-camping.jpg',
+          rating: camping.rating || (Math.random() * 2 + 3).toFixed(1),
+          price: Math.floor(Math.random() * 50) + 20,
+          web: camping.website_url || null
+        }));
+      } catch (error) {
+        console.error('Error al cargar campings:', error);
       }
-    ]
-  };
-}
+    },
+    goToPage(page) {
+      this.currentPage = page;
+    },
+    prevPage() {
+      if (this.currentPage > 1) this.currentPage--;
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) this.currentPage++;
+    }
+  }
 };
 </script>
 
 <style scoped>
-.home-container {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #ffffff;
-}
-
-.search-section {
-  background: url('/images/fondo-busq.png') no-repeat center center/cover;
-  padding: 25px;
-  margin-top: 0;
-  width: 100vw;
-  height: 350px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.search-box {
+.search-results-root {
+  background: #fff;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  width: 80%;
-  max-width: 1200px;
-  background: white;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
 }
-
-.search-title {
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #fff;
+  padding: 36px 40px 36px 40px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 18px;
+}
+.search-label {
+  color: #222;
+  margin-right: 10px;
   font-size: 22px;
   font-weight: bold;
-  color: #00bf63;
-  text-transform: uppercase;
-  text-align: center;
+  letter-spacing: 1px;
 }
-
-.search-fields {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.search-box input {
-  padding: 10px;
+.search-input {
   border: 2px solid #00bf63;
-  border-radius: 10px;
-  outline: none;
-  font-size: 14px;
-  font-weight: normal;
-  color: black;
-  width: 100%;
-  gap: 15px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  width: 120px;
 }
-
-.search-fields input[type="text"] {
-  flex: 1;
-}
-
-.search-fields input[type="number"] {
-    flex: 0.5; 
-    min-width: 80px;
-    text-align: left;
-    margin-left: -10px;
-}
-
-.search-fields::placeholder {
-  color: black;
-}
-
 .date-inputs {
   display: flex;
-  gap: 0;
+}
+.date-left {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+.date-right {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.search-btn {
+  background: #00bf63;
+  color: #fff;
+  border: 2px solid #00bf63; /* <-- Añade el borde aquí */
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  box-shadow: 0 2px 8px rgba(0,191,99,0.08);
+}
+.search-btn:hover {
+  background: #fff;
+  color: #00bf63;
+  /* El borde ya está en el estado normal, así que no cambia el tamaño */
 }
 
-.date-inputs input {
-  width: 48%;
-  padding: 10px;
-  border-radius: 0;
-  border-left: none;
-  appearance: none;
+.main-content {
+  display: flex;
+  flex: 1;
+  gap: 24px;
+  padding: 0 40px 0 40px;
 }
-
-.date-inputs input:first-child {
-  border-top-left-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-left: 2px solid #00bf63;
+.map-section {
+  width: 38%;
+  min-width: 320px;
+  height: 500px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  background: #eee;
 }
-
-.date-inputs input:last-child {
-  border-top-right-radius: 10px;
-  border-bottom-right-radius: 10px;
+.results-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
-
-.web-button {
-background: #00bf63;
-color: white;
-font-weight: bold;
-border: 2px solid #00bf63;
-cursor: pointer;
-padding: 12px 20px;
-border-radius: 10px;
-transition: 0.3s ease;
-}
-
-.web-button:hover {
-background: white;
-color: #00bf63;
-border: 2px solid #00bf63;
-}
-
-.campings-container {
-display: flex;
-flex-direction: column;
-align-items: center;
-background: white;
-padding: 20px;
-}
-
-.featured-campings {
-width: 100%;
-max-width: 1200px;
-}
-
-.section-title {
-color: #00bf63;
-font-weight: bold;
-font-size: 24px;
-margin-bottom: 15px;
-text-align: left;
-}
-
-.campings-content {
-display: flex;
-gap: 20px;
-}
-
 .campings-list {
-display: flex;
-flex-direction: column;
-gap: 15px;
-flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
 }
-
-.separator-bar {
-width: 4px;
-height: 100%; /* Grosor de la barra */
-background-color: #00bf63; /* Color verde */
-margin: 15px 0; /* Espaciado arriba y abajo */
-border-radius: 2px;
-}
-
 .camping-card {
-display: flex;
-align-items: stretch; /* Asegura que la imagen y el contenido ocupen la misma altura */
-background: white;
-border-radius: 10px;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-border: 1px solid #00bf63;
-overflow: hidden; /* Evita que la imagen sobresalga */
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1.5px solid #00bf63;
+  overflow: hidden;
+  min-height: 110px;
 }
-
 .camping-image {
-width: 120px; /* Ajusta el ancho según necesites */
-height: auto; /* Permite que la imagen se ajuste correctamente */
-flex-shrink: 0; /* Evita que la imagen se deforme si el contenido crece */
-border-radius: 10px 0 0 10px; /* Bordes redondeados solo en el lado izquierdo */
-object-fit: cover;
+  width: 120px;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px 0 0 10px;
 }
-
 .camping-info {
-flex: 1;
-text-align: left;
-padding-left: 20px;
-margin-top: 15px;
+  flex: 1;
+  text-align: left;
+  padding: 18px 0 0 18px;
 }
-
 .camping-name {
-font-size: 18px;
-font-weight: bold;
+  font-size: 18px;
+  font-weight: bold;
 }
-
 .camping-address {
-font-size: 14px;
-color: #666;
+  font-size: 14px;
+  color: #666;
 }
-
 .camping-rating {
-font-size: 16px;
-font-weight: bold;
+  font-size: 16px;
+  font-weight: bold;
 }
-
 .camping-price {
 text-align: right;
 min-width: 140px;
 padding-right: 15px;
 margin-top: 15px;
+margin-bottom: 20px;
 }
 
 .price-text {
 color: #00bf63;
 font-size: 16px;
 font-weight: bold;
-margin-bottom: 5px;
+margin-bottom: 20px;
 }
 
-/* Estilos para el mapa */
-.map-container {
-width: 40%;
-height: 400px;
-border-radius: 10px;
-overflow: hidden;
-box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.web-button {
+  margin-top: 0; /* Sin margen extra */
+  background: #00bf63;
+  color: white;
+  font-weight: bold;
+  border: 2px solid #00bf63;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 10px;
+  transition: 0.3s ease;
 }
-
-/* Barra separadora */
+.web-button:hover {
+  background: white;
+  color: #00bf63;
+  border: 2px solid #00bf63;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.pagination button {
+  background: #fff;
+  border: 2px solid #00bf63;
+  color: #00bf63;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.pagination button.active,
+.pagination button:hover {
+  background: #00bf63;
+  color: #fff;
+}
 .footer-divider {
-width: 90%;
-height: 3px;
-background-color: #00bf63;
-margin: 20px auto;
+  width: 90%;
+  height: 3px;
+  background-color: #00bf63;
+  margin: 20px auto 0 auto;
 }
-
-/* Barra separadora */
-.footer-divider {
-width: 90%;
-height: 3px;
-background-color: #00bf63;
-margin: 20px auto;
-}
-
 </style>

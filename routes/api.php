@@ -30,11 +30,9 @@ Route::get('get-category-posts/{id}', [PostControllerAdvance::class, 'getCategor
 Route::get('get-post/{id}', [PostControllerAdvance::class, 'getPost']);
 
 // 🔵 CAMPINGS - Públicos y protegidos según middleware en el controlador
+Route::get('/campings/destacados', [CampingController::class, 'destacados']);
 Route::get('/campings', [CampingController::class, 'index']);
 Route::get('/campings/{camping}', [CampingController::class, 'show']);
-Route::post('/campings', [CampingController::class, 'store']);
-Route::put('/campings/{camping}', [CampingController::class, 'update']);
-Route::delete('/campings/{camping}', [CampingController::class, 'destroy']);
 
 // 🟣 NOTES - Pueden estar protegidas si decides hacerlo con middleware
 Route::get('note', [NoteController::class, 'index'])->name('note.index');
@@ -44,6 +42,12 @@ Route::put('note/{id}', [NoteController::class, 'update'])->name('note.update');
 Route::delete('note/{id}', [NoteController::class, 'destroy'])->name('note.destroy');
 
 // 🔒 RUTAS PROTEGIDAS POR SANCTUM
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::post('/campings', [CampingController::class, 'store']);
+    Route::put('/campings/{camping}', [CampingController::class, 'update']);
+    Route::delete('/campings/{camping}', [CampingController::class, 'destroy']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     // Users y Roles
     Route::apiResource('users', UserController::class);

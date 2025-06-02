@@ -37,9 +37,10 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'accommodation_id' => 'required|exists:accommodations,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
             'guests' => 'required|integer|min:1',
+            'total_price' => 'required|numeric|min:0',
         ]);
 
         $validated['user_id'] = Auth::id();
@@ -62,9 +63,10 @@ class ReservationController extends Controller
         $this->authorize('update', $reservation); // Solo si usas Policies
 
         $validated = $request->validate([
-            'start_date' => 'sometimes|required|date',
-            'end_date' => 'sometimes|required|date|after:start_date',
+            'check_in' => 'sometimes|required|date',
+            'check_out' => 'sometimes|required|date|after:check_in',
             'guests' => 'sometimes|required|integer|min:1',
+            'total_price' => 'sometimes|required|numeric|min:0',
             'status' => 'sometimes|in:pending,confirmed,cancelled',
         ]);
 

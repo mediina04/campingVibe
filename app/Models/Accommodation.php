@@ -11,10 +11,13 @@ class Accommodation extends Model
 
     protected $fillable = [
         'camping_id',
+        'type',
         'name',
+        'price_per_night',
+        'capacity',
         'description',
-        'price',
-        'type'
+        
+        
     ];
 
     public function camping()

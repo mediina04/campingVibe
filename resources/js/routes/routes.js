@@ -75,7 +75,7 @@ export default [
             {
                 path: '/campings/:id',
                 name: 'campings.show',
-                component: () => import('../views/campings/ShowCampings.vue')
+                component: () => import('../views/campings/showCampings.vue')
             },
             {
                 path: 'posts',

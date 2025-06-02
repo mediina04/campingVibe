@@ -7,10 +7,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        $this->call(CategoryTableSeeder::class);
         $this->call(PermissionTableSeeder::class);
         $this->call(CreateAdminUserSeeder::class);
-        $this->call(CampingSeeder::class);
+        $this->call(CampingsSeeder::class);
         $this->call(AccommodationSeeder::class);
         $this->call(ReservationSeeder::class);
         $this->call(ReviewSeeder::class);
