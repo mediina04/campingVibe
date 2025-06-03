@@ -17,10 +17,13 @@ class ProfileController extends Controller
     {
         $profile = Auth::user();
         $profile->name = $request->name;
+        $profile->surname1 = $request->surname1;
         $profile->email = $request->email;
-
+        if ($request->filled('password')) {
+            $profile->password = bcrypt($request->password);
+        }
         if ($profile->save()) {
-            return $this->successResponse($profile, 'User updated');;
+            return $this->successResponse($profile, 'User updated');
         }
         return response()->json(['status' => 403, 'success' => false]);
     }
@@ -36,5 +39,39 @@ class ProfileController extends Controller
 
 
         return $this->successResponse($user, 'User found');
+    }
+
+    public function reservations(Request $request)
+    {
+        $reservations = $request->user()->reservations()->with('accommodation.camping')->get();
+
+        $data = $reservations->map(function($reservation) {
+            return [
+                'id' => $reservation->id,
+                'camping' => $reservation->accommodation->camping->name ?? '',
+                'start' => $reservation->check_in,
+                'end' => $reservation->check_out,
+                'people' => $reservation->guests,
+                'web' => $reservation->accommodation->camping->website ?? '#'
+            ];
+        });
+
+        return response()->json($data);
+    }
+    public function reviews(Request $request)
+    {
+        $reviews = $request->user()->reviews()->with('camping')->get();
+
+        $data = $reviews->map(function($review) {
+            return [
+                'id' => $review->id,
+                'camping' => $review->camping->name ?? '',
+                'date' => $review->created_at->format('d/m/Y'),
+                'rating' => $review->rating,
+                'text' => $review->comment,
+            ];
+        });
+
+        return response()->json($data);
     }
 }

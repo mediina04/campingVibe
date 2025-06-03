@@ -9,28 +9,23 @@
         <input v-model="departureDate" type="text" class="search-input date-right" placeholder="" />
       </div>
       <input v-model="people" type="text" class="search-input" />
-      <button class="search-btn">BUSCAR</button>
+      <button class="search-btn" @click="buscar">BUSCAR</button>
     </div>
 
     <div class="main-content">
       <!-- Mapa a la izquierda -->
       <div class="map-section">
-        <iframe
-          width="100%"
-          height="100%"
-          frameborder="0"
-          style="border:0"
-          referrerpolicy="no-referrer-when-downgrade"
-          src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBwoXNHQAsvDqvdG3qJ0-MGYieC85E8T8E&q=Barcelona"
-          allowfullscreen>
-        </iframe>
+        <div id="map" style="width: 100%; height: 100%;"></div>
       </div>
       <!-- Resultados a la derecha -->
       <div class="results-section">
-        <div class="campings-list">
+        <div v-if="campings.length === 0" class="no-results-msg">
+          No se han encontrado campings para tu búsqueda.
+        </div>
+        <div v-else class="campings-list">
           <div
             class="camping-card"
-            v-for="camping in campings"
+            v-for="camping in paginatedCampings"
             :key="camping.id"
             @click="$router.push({ name: 'campings.show', params: { id: camping.id } })"
             style="cursor:pointer"
@@ -43,7 +38,8 @@
             </div>
             <div class="camping-price">
               <p class="price-text">
-                Desde <strong>{{ camping.price ?? 'Consultar' }} €</strong> noche
+                <span v-if="camping.price !== null">Desde <strong>{{ camping.price }} €</strong> noche</span>
+                <span v-else>No disponible</span>
               </p>
               <a
                 v-if="camping.web"
@@ -61,7 +57,7 @@
           </div>
         </div>
         <!-- Paginación -->
-        <div class="pagination">
+        <div class="pagination" v-if="campings.length > 0">
           <button @click="prevPage" :disabled="currentPage === 1">&lt;</button>
           <button
             v-for="page in totalPages"
@@ -92,7 +88,9 @@ export default {
       departureDate: '',
       people: '',
       currentPage: 1,
-      perPage: 5
+      perPage: 4,
+      map: null,
+      markers: []
     };
   },
   computed: {
@@ -105,25 +103,103 @@ export default {
     }
   },
   mounted() {
-    this.fetchCampings();
+    // Sincroniza los inputs con los parámetros de la URL al cargar
+    this.syncInputsWithQuery();
+    this.fetchCampings().then(() => {
+      this.initMap();
+    });
+  },
+  watch: {
+    // Si cambian los parámetros de la URL, actualiza los inputs y los resultados
+    '$route.query': {
+      handler() {
+        this.syncInputsWithQuery();
+        this.fetchCampings().then(() => {
+          if (this.map) this.updateMarkers();
+        });
+      },
+      immediate: false
+    }
   },
   methods: {
+    syncInputsWithQuery() {
+      this.searchQuery = this.$route.query.q || '';
+      this.arrivalDate = this.$route.query.arrival || '';
+      this.departureDate = this.$route.query.departure || '';
+      this.people = this.$route.query.people || '';
+    },
     async fetchCampings() {
       try {
-        const response = await fetch("http://localhost:8000/api/campings");
+        const params = new URLSearchParams(this.$route.query).toString();
+        const response = await fetch(`http://localhost:8000/api/campings?${params}`);
         const json = await response.json();
 
         this.campings = json.data.map(camping => ({
           ...camping,
           address: camping.location || 'Dirección no disponible',
           image: camping.image || '/images/default-camping.jpg',
-          rating: camping.rating || (Math.random() * 2 + 3).toFixed(1),
-          price: Math.floor(Math.random() * 50) + 20,
+          rating: camping.rating_avg ?? 'N/A',
+          price: (camping.accommodations && camping.accommodations.length > 0)
+            ? Math.min(...camping.accommodations.map(a => parseFloat(a.price_per_night)))
+            : null,
           web: camping.website_url || null
         }));
+
+        // Si el mapa ya está inicializado, actualiza los marcadores
+        if (this.map) {
+          this.updateMarkers();
+        }
       } catch (error) {
         console.error('Error al cargar campings:', error);
       }
+    },
+    initMap() {
+      // Centra el mapa en España
+      this.map = new window.google.maps.Map(document.getElementById('map'), {
+        center: { lat: 40.4637, lng: -3.7492 },
+        zoom: 6
+      });
+      this.updateMarkers();
+    },
+    updateMarkers() {
+      // Limpia marcadores anteriores
+      if (this.markers) {
+        this.markers.forEach(marker => marker.setMap(null));
+      }
+      this.markers = [];
+
+      // Añade un marcador por cada camping
+      this.campings.forEach(camping => {
+        if (camping.latitude && camping.longitude) {
+          const marker = new window.google.maps.Marker({
+            position: { lat: parseFloat(camping.latitude), lng: parseFloat(camping.longitude) },
+            map: this.map,
+            title: camping.name
+          });
+
+          // InfoWindow opcional
+          const infowindow = new window.google.maps.InfoWindow({
+            content: `<strong>${camping.name}</strong><br>${camping.location}`
+          });
+          marker.addListener('click', function() {
+            infowindow.open(this.map, marker);
+          });
+
+          this.markers.push(marker);
+        }
+      });
+    },
+    buscar() {
+      // Actualiza la URL con los nuevos parámetros y recarga resultados
+      this.$router.push({
+        name: this.$route.name,
+        query: {
+          q: this.searchQuery,
+          arrival: this.arrivalDate,
+          departure: this.departureDate,
+          people: this.people
+        }
+      });
     },
     goToPage(page) {
       this.currentPage = page;
@@ -317,5 +393,12 @@ margin-bottom: 20px;
   height: 3px;
   background-color: #00bf63;
   margin: 20px auto 0 auto;
+}
+.no-results-msg {
+  color: #00bf63;
+  font-weight: bold;
+  font-size: 18px;
+  margin: 40px 0;
+  text-align: center;
 }
 </style>

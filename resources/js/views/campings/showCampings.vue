@@ -15,7 +15,7 @@
         <p class="camping-location">{{ camping.location }}</p>
         <div class="camping-rating-row">
           <div class="camping-rating">
-            <span class="rating-value">{{ camping.rating ?? 'N/A' }}</span>
+            <span class="rating-value">{{ camping.rating_avg ?? 'N/A' }}</span>
             <span class="rating-max">/ 5</span>
           </div>
         </div>
@@ -38,30 +38,35 @@
       <div class="reservation-form">
         <h2 class="reservation-title">RESERVA TU ESTANCIA</h2>
         <select v-model="reservation.type" class="reservation-input">
-          <option>Bungalow</option>
-          <option>Parcela</option>
+          <option
+            v-for="a in camping.accommodations"
+            :key="a.id"
+            :value="a.type.charAt(0).toUpperCase() + a.type.slice(1).toLowerCase()"
+          >
+            {{ a.type.charAt(0).toUpperCase() + a.type.slice(1).toLowerCase() }}
+          </option>
         </select>
         <div class="field-group date-inputs">
-            <input
-              v-model="arrivalDate"
-              :type="typeArrival"
-              placeholder="Llegada"
-              min="{{ today }}"
-              @focus="typeArrival = 'date'"
-              @blur="typeArrival = 'text'"
-            />
-            <input
-              v-model="departureDate"
-              :type="typeDeparture"
-              placeholder="Salida"
-              :min="arrivalDate || today"
-              @focus="typeDeparture = 'date'"
-              @blur="typeDeparture = 'text'"
-            />
-          </div>
+          <input
+            v-model="arrivalDate"
+            :type="typeArrival"
+            placeholder="Llegada"
+            :min="today"
+            @focus="typeArrival = 'date'"
+            @blur="typeArrival = 'text'"
+          />
+          <input
+            v-model="departureDate"
+            :type="typeDeparture"
+            placeholder="Salida"
+            :min="arrivalDate || today"
+            @focus="typeDeparture = 'date'"
+            @blur="typeDeparture = 'text'"
+          />
+        </div>
         <input v-model="reservation.people" type="number" min="1" class="reservation-input" placeholder="Personas" />
         <button class="price-btn" @click="calculatePrice" :disabled="!canCalculatePrice">CALCULAR PRECIO</button>
-        <div v-if="priceError" class="form-error">{{ priceError }}</div>      
+        <div v-if="priceError" class="form-error">{{ priceError }}</div>
       </div>
       <div class="reservation-summary">
         <div class="summary-title">RESUMEN DE TU RESERVA</div>
@@ -72,7 +77,7 @@
           </div>
           <div>
             <div class="summary-dates">
-              {{ reservation.arrival || 'Fecha llegada' }} - {{ reservation.departure || 'Fecha salida' }}
+              {{ arrivalDate || 'Fecha llegada' }} - {{ departureDate || 'Fecha salida' }}
             </div>
             <div>
               <span class="summary-people">
@@ -88,7 +93,40 @@
             <span class="summary-price" v-if="showPrice">{{ price }} €</span>
           </div>
           <div class="reserve-btn-wrapper">
-            <button class="reserve-btn" :disabled="!canCalculatePrice">RESERVA</button>
+            <button class="reserve-btn" :disabled="!canCalculatePrice" @click="reservar">RESERVA</button>
+          </div>
+          <div v-if="reservaConfirmada" class="reserva-exito">
+            ¡Reserva confirmada con éxito!
+          </div>
+        </div>
+        <div v-if="showPrice && !reservaConfirmada">
+          <span>({{ getNights() }} noches x {{ selectedAccommodation?.price_per_night }} €/noche)</span>
+        </div>
+        <!-- Desglose visual del precio -->
+        <div v-if="showPrice && !reservaConfirmada" class="price-breakdown">
+          <div>
+            <strong>{{ reservation.type }}:</strong>
+            {{ selectedAccommodation?.price_per_night || '...' }} €/noche
+          </div>
+          <div>
+            <strong>Noches:</strong>
+            {{ getNights() }}
+          </div>
+          <div>
+            <strong>Personas:</strong>
+            {{ reservation.people }}
+            <span v-if="reservation.people > 2">
+              ({{ reservation.people - 2 }} extra x 10%)
+            </span>
+          </div>
+          <div>
+            <strong>Subtotal:</strong>
+            {{ getNights() }} x {{ selectedAccommodation?.price_per_night || '...' }} = 
+            {{ getNights() * (selectedAccommodation?.price_per_night || 0) }} €
+          </div>
+          <div v-if="reservation.people > 2">
+            <strong>Recargo personas extra:</strong>
+            +{{ Math.round((price - getNights() * (selectedAccommodation?.price_per_night || 0)) * 100) / 100 }} €
           </div>
         </div>
       </div>
@@ -112,27 +150,32 @@
             <span class="review-rating-value">{{ review.rating }} / 5</span>
           </div>
           <div class="review-btn-wrapper">
-            <button class="publish-btn">PUBLICAR</button>
+            <button class="publish-btn" @click="publicarResena">PUBLICAR</button>
           </div>
         </div>
         <div class="reviews-list">
-          <div class="review-card" v-for="r in paginatedReviews" :key="r.id">
-            <div class="review-header">
-              <span class="review-author">{{ r.name }}</span>
-              <span class="review-rating">{{ r.rating }} / 5</span>
-              <span class="review-date">{{ r.date }}</span>
-            </div>
-            <div class="review-text">{{ r.text }}</div>
+          <div v-if="paginatedReviews.length === 0" class="no-reviews-msg">
+            Aún no hay reseñas para este camping. ¡Sé el primero en opinar!
           </div>
-          <div class="pagination">
-            <button @click="prevPage" :disabled="currentPage === 1">&lt;</button>
-            <button
-              v-for="page in totalPages"
-              :key="page"
-              :class="{ active: currentPage === page }"
-              @click="goToPage(page)"
-            >{{ page }}</button>
-            <button @click="nextPage" :disabled="currentPage === totalPages">&gt;</button>
+          <div v-else>
+            <div class="review-card" v-for="r in paginatedReviews" :key="r.id">
+              <div class="review-header">
+                <span class="review-author">{{ r.user?.name || 'Anónimo' }}</span>
+                <span class="review-rating">{{ r.rating }} / 5</span>
+                <span class="review-date">{{ formatDate(r.created_at) }}</span>
+              </div>
+              <div class="review-text">{{ r.comment }}</div>
+            </div>
+            <div class="pagination">
+              <button @click="prevPage" :disabled="currentPage === 1">&lt;</button>
+              <button
+                v-for="page in totalPages"
+                :key="page"
+                :class="{ active: currentPage === page }"
+                @click="goToPage(page)"
+              >{{ page }}</button>
+              <button @click="nextPage" :disabled="currentPage === totalPages">&gt;</button>
+            </div>
           </div>
         </div>
       </div>
@@ -141,16 +184,22 @@
   <div v-else>
     <p>Cargando información del camping...</p>
   </div>
+  <div class="footer-divider"></div>
+    <Footer />
 </template>
 
 <script>
+import axios from 'axios';
+import Footer from '@/layouts/AppFooter.vue';
+
 export default {
+  components: { Footer },
   data() {
     return {
       camping: null,
       today: new Date().toISOString().slice(0, 10),
       reservation: {
-        type: 'Bungalow',
+        type: '', // Se selecciona en el selector
         arrival: '',
         departure: '',
         people: 1,
@@ -163,17 +212,15 @@ export default {
         text: '',
         rating: 5,
       },
-      reviews: [
-        { id: 1, name: 'Montoya', date: '25 / 01 / 2025', text: 'Camping estupendo, parcela large, personal buenísimo...', rating: 5 },
-        { id: 2, name: 'Naomi', date: '7 / 11 / 2024', text: 'Muy bonito y muy chulo este camping...', rating: 4.5 },
-        { id: 3, name: 'Petri', date: '31 / 12 / 2023', text: 'De los mejores campings que he estado...', rating: 5 },
-      ],
+      reviews: [],
       currentPage: 1,
       perPage: 3,
       typeArrival: 'text',
       typeDeparture: 'text',
       arrivalDate: '',
       departureDate: '',
+      reservaConfirmada: false,
+      selectedAccommodation: null,
     };
   },
   computed: {
@@ -185,12 +232,12 @@ export default {
       return Math.ceil(this.reviews.length / this.perPage);
     },
     priceError() {
-    if (!this.reservation.type) return 'Selecciona tipo de alojamiento.';
-    if (!this.arrivalDate) return 'Selecciona la fecha de llegada.';
-    if (!this.departureDate) return 'Selecciona la fecha de salida.';
-    if (!this.reservation.people || this.reservation.people < 1) return 'Indica el número de personas.';
-    if (this.arrivalDate && this.departureDate && this.arrivalDate > this.departureDate) return 'La fecha de salida debe ser posterior a la de llegada.';
-    return '';
+      if (!this.reservation.type) return 'Selecciona tipo de alojamiento.';
+      if (!this.arrivalDate) return 'Selecciona la fecha de llegada.';
+      if (!this.departureDate) return 'Selecciona la fecha de salida.';
+      if (!this.reservation.people || this.reservation.people < 1) return 'Indica el número de personas.';
+      if (this.arrivalDate && this.departureDate && this.arrivalDate > this.departureDate) return 'La fecha de salida debe ser posterior a la de llegada.';
+      return '';
     },
     canCalculatePrice() {
       return (
@@ -212,20 +259,92 @@ export default {
         const response = await fetch(`/api/campings/${id}`);
         const json = await response.json();
         this.camping = json.data;
+        if (this.camping.accommodations && this.camping.accommodations.length > 0) {
+          this.reservation.type = this.camping.accommodations[0].type.charAt(0).toUpperCase() + this.camping.accommodations[0].type.slice(1).toLowerCase();
+        }
+        await this.fetchReviews(); // <-- Añade esto
       } catch (error) {
         console.error('Error al cargar el camping:', error);
       }
     },
+    async fetchReviews() {
+      try {
+        const response = await axios.get(`/api/campings/${this.camping.id}/reviews`);
+        this.reviews = response.data;
+      } catch (e) {
+        this.reviews = [];
+      }
+    },
     showDatepicker(type) {
-      // Aquí puedes abrir un datepicker externo si usas uno, o usar un modal, etc.
-      // Por defecto, solo borra el valor para que el usuario escriba la fecha.
       this.showDatepickerType = type;
       this.reservation[type] = '';
     },
     calculatePrice() {
-      // Simulación de cálculo de precio
-      this.price = 340;
+      const selectedAccommodation = this.camping.accommodations.find(
+        a => a.type.toLowerCase() === this.reservation.type.toLowerCase()
+      );
+      this.selectedAccommodation = selectedAccommodation; // <-- Añade esto
+      if (!selectedAccommodation) {
+        this.price = null;
+        this.showPrice = false;
+        return;
+      }
+      const nights = this.getNights();
+      const basePrice = nights * parseFloat(selectedAccommodation.price_per_night);
+      const includedPeople = 2;
+      const extraPeople = Math.max(0, this.reservation.people - includedPeople);
+      const extraFee = 0.10;
+      const totalPrice = basePrice * (1 + extraPeople * extraFee);
+      this.price = Math.round(totalPrice * 100) / 100;
       this.showPrice = true;
+    },
+    async reservar() {
+      try {
+        // Busca el alojamiento seleccionado por tipo
+        const selectedAccommodation = this.camping.accommodations.find(
+          a => a.type.toLowerCase() === this.reservation.type.toLowerCase()
+        );
+        if (!selectedAccommodation) {
+          alert('No se ha encontrado el alojamiento seleccionado.');
+          return;
+        }
+        const accommodationId = selectedAccommodation.id;
+
+        await axios.post('/api/reservations', {
+          accommodation_id: accommodationId,
+          check_in: this.arrivalDate,
+          check_out: this.departureDate,
+          guests: this.reservation.people,
+          total_price: this.price
+        }, {
+          withCredentials: true
+        });
+
+        this.reservaConfirmada = true;
+      } catch (e) {
+        alert('Error al guardar la reserva');
+      }
+    },
+    async publicarResena() {
+      try {
+        // Validación básica
+        if (!this.review.name || !this.review.text || !this.review.rating) {
+          alert('Por favor, rellena todos los campos y selecciona una puntuación.');
+          return;
+        }
+        await axios.post('/api/reviews', {
+          camping_id: this.camping.id,
+          rating: this.review.rating,
+          comment: this.review.text
+        }, {
+          withCredentials: true
+        });
+        // Limpia el formulario y recarga las reseñas
+        this.review = { name: '', text: '', rating: 5 };
+        await this.fetchReviews();
+      } catch (e) {
+        alert('Debes estar registrado para dejar una reseña.');
+      }
     },
     goToPage(page) {
       this.currentPage = page;
@@ -235,7 +354,18 @@ export default {
     },
     nextPage() {
       if (this.currentPage < this.totalPages) this.currentPage++;
-    }
+    },
+    getNights() {
+      if (!this.arrivalDate || !this.departureDate) return 0;
+      const start = new Date(this.arrivalDate);
+      const end = new Date(this.departureDate);
+      const diff = (end - start) / (1000 * 60 * 60 * 24);
+      return diff > 0 ? diff : 0;
+    },
+    formatDate(date) {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString();
+    },
   }
 };
 </script>
@@ -534,6 +664,13 @@ export default {
   color: #00bf63;
   border: 2px solid #00bf63;
 }
+.reserva-exito {
+  color: #00bf63;
+  font-weight: bold;
+  margin-top: 12px;
+  text-align: center;
+  font-size: 1.1rem;
+}
 .reviews-section {
   margin-top: 48px;
 }
@@ -686,5 +823,28 @@ export default {
 }
 .date-input {
   flex: 1;
+}
+.price-breakdown {
+  background: #f3f9f4;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  font-size: 1.05em;
+  color: #222;
+}
+.price-breakdown div {
+  margin-bottom: 4px;
+}
+.no-reviews-msg {
+  color: #888;
+  font-size: 1.1em;
+  text-align: center;
+  margin: 20px 0;
+}
+.footer-divider {
+  width: 90%;
+  height: 3px;
+  background-color: #00bf63;
+  margin: 20px auto 0 auto;
 }
 </style>

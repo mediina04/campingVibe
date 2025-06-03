@@ -64,7 +64,10 @@
             <p class="camping-rating"><strong>{{ camping.rating }} / 5</strong></p>
           </div>
           <div class="camping-price">
-            <p class="price-text">Desde <strong>{{ camping.price }} €</strong> noche</p>
+            <p class="price-text">
+  <span v-if="camping.price !== null">Desde <strong>{{ camping.price }} €</strong> noche</span>
+  <span v-else>No disponible</span>
+</p>
             <a
               v-if="camping.web"
               :href="camping.web"
@@ -84,16 +87,8 @@
 
       <!-- Mapa -->
       <div class="map-container">
-        <iframe
-          width="100%"
-          height="100%"
-          frameborder="0"
-          style="border:0"
-          referrerpolicy="no-referrer-when-downgrade"
-          src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBwoXNHQAsvDqvdG3qJ0-MGYieC85E8T8E&q=España"
-          allowfullscreen>
-        </iframe>
-      </div>
+  <div id="featured-map" style="width: 100%; height: 100%;"></div>
+</div>
     </div>
   </section>
 </div>
@@ -120,7 +115,9 @@ export default {
       people: '',
       typeArrival: 'text',
       typeDeparture: 'text',
-      today: new Date().toISOString().slice(0, 10)
+      today: new Date().toISOString().slice(0, 10),
+      featuredMap: null,
+      featuredMarkers: []
     };
   },
   mounted() {
@@ -164,17 +161,63 @@ export default {
         const response = await fetch('/api/campings/destacados');
         const json = await response.json();
 
-        this.campings = json.data.map(camping => ({
-          ...camping,
-          address: camping.location || 'Dirección no disponible',
-          rating: camping.rating || (Math.random() * 2 + 3).toFixed(1),
-          price: Math.floor(Math.random() * 50) + 20,
-          web: camping.website_url || null
-        }));
+        this.campings = json.data.map(camping => {
+          let minPrice = null;
+          if (camping.accommodations && camping.accommodations.length > 0) {
+            minPrice = Math.min(...camping.accommodations.map(a => parseFloat(a.price_per_night)));
+          }
+          return {
+            ...camping,
+            address: camping.location || 'Dirección no disponible',
+            rating: camping.rating_avg ?? 'N/A',
+            price: minPrice,
+            web: camping.website_url || null
+          };
+        });
+
+        // Inicializa el mapa después de cargar los campings
+        this.$nextTick(() => {
+          this.initFeaturedMap();
+        });
 
       } catch (error) {
         console.error('Error al cargar campings destacados:', error);
       }
+    },
+    initFeaturedMap() {
+      if (!window.google || !window.google.maps) return;
+      this.featuredMap = new window.google.maps.Map(document.getElementById('featured-map'), {
+        center: { lat: 40.4637, lng: -3.7492 },
+        zoom: 6
+      });
+      this.updateFeaturedMarkers();
+    },
+    updateFeaturedMarkers() {
+      // Limpia marcadores anteriores
+      if (this.featuredMarkers) {
+        this.featuredMarkers.forEach(marker => marker.setMap(null));
+      }
+      this.featuredMarkers = [];
+
+      // Añade un marcador por cada camping destacado
+      this.campings.forEach(camping => {
+        if (camping.latitude && camping.longitude) {
+          const marker = new window.google.maps.Marker({
+            position: { lat: parseFloat(camping.latitude), lng: parseFloat(camping.longitude) },
+            map: this.featuredMap,
+            title: camping.name
+          });
+
+          const infowindow = new window.google.maps.InfoWindow({
+            content: `<strong>${camping.name}</strong><br>${camping.address}`
+          });
+          marker.addListener('click', function() {
+            infowindow.open(this.featuredMap, marker);
+          });
+
+          this.featuredMarkers.push(marker);
+        }
+      });
     }
   }
 };

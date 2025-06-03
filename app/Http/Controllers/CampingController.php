@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Camping;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Log;
 class CampingController extends Controller
 {
     public function __construct()
@@ -20,14 +19,14 @@ class CampingController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Camping::query();
+        $query = Camping::with('accommodations');
 
         // Búsqueda flexible por nombre, ciudad o provincia
         if ($request->filled('q')) {
-            $q = trim($request->input('q'));
+            $q = mb_strtolower(trim($request->input('q')));
             $query->where(function($sub) use ($q) {
-                $sub->where('name', 'like', "%$q%")
-                    ->orWhere('location', 'like', "%$q%");
+                $sub->whereRaw('LOWER(name) LIKE ?', ["%$q%"])
+                    ->orWhereRaw('LOWER(location) LIKE ?', ["%$q%"]);
             });
         }
 
@@ -46,16 +45,14 @@ class CampingController extends Controller
             }
         }
 
-        // No filtramos por fechas ni personas, solo validamos
-
-        // Justo antes de $campings = $query->get()->map(...)
-        // dd($query->toSql(), $query->getBindings());
-
         $campings = $query->get()->map(function ($camping) {
             $images = $camping->images;
             $camping->setAttribute('image', $images && count($images) > 0
                 ? asset($images[0])
                 : asset('images/default-camping.jpg'));
+            // Asegura que lat/lng estén presentes en la respuesta
+            $camping->setAttribute('latitude', $camping->latitude);
+            $camping->setAttribute('longitude', $camping->longitude);
             return $camping;
         });
 
@@ -73,6 +70,9 @@ class CampingController extends Controller
      */
     public function show(Camping $camping)
     {
+        // Carga los alojamientos relacionados
+        $camping->load('accommodations');
+
         return response()->json([
             'status' => 'success',
             'data' => $camping
@@ -149,26 +149,24 @@ class CampingController extends Controller
 
     public function destacados()
     {
-        $campings = Camping::inRandomOrder()->take(5)->get()->map(function ($camping) {
-            // El campo images ya es un array gracias al cast
-            $images = $camping->images;
-
-            // Tomamos la primera imagen o una por defecto
-            $camping->image = $images && count($images) > 0
-                ? asset($images[0])
-                : asset('images/default-camping.jpg');
-
-            return $camping;
-        });
+        $campings = Camping::with('accommodations')
+            ->inRandomOrder()
+            ->take(5)
+            ->get()
+            ->map(function ($camping) {
+                $images = $camping->images;
+                $camping->image = $images && count($images) > 0
+                    ? asset($images[0])
+                    : asset('images/default-camping.jpg');
+                // Añade lat/lng a la respuesta
+                $camping->latitude = $camping->latitude;
+                $camping->longitude = $camping->longitude;
+                return $camping;
+            });
 
         return response()->json([
             'status' => 'success',
             'data' => $campings
         ]);
     }
-
-
-
-
-
 }

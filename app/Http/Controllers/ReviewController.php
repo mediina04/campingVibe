@@ -44,6 +44,11 @@ class ReviewController extends Controller
 
         $review = Review::create($data);
 
+        // Actualiza el rating medio del camping
+        $camping = $review->camping;
+        $camping->rating_avg = $camping->reviews()->avg('rating');
+        $camping->save();
+
         return response()->json($review, 201);
     }
 
@@ -78,5 +83,16 @@ class ReviewController extends Controller
         $review->delete();
 
         return response()->json(['message' => 'Review deleted successfully']);
+    }
+
+    // GET /api/campings/{camping}/reviews
+    public function reviewsByCamping($campingId)
+    {
+        $reviews = Review::where('camping_id', $campingId)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($reviews);
     }
 }

@@ -30,8 +30,13 @@ class Camping extends Model
     }
 
     // Relación con reservas (si las hay)
-    public function bookings()
+    public function reviews()
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(\App\Models\Review::class);
+    }
+
+    public function accommodations()
+    {
+        return $this->hasMany(\App\Models\Accommodation::class);
     }
 }

@@ -34,6 +34,7 @@ Route::get('/campings/destacados', [CampingController::class, 'destacados']);
 Route::get('/campings', [CampingController::class, 'index']);
 Route::get('/campings/{camping}', [CampingController::class, 'show']);
 
+
 // 🟣 NOTES - Pueden estar protegidas si decides hacerlo con middleware
 Route::get('note', [NoteController::class, 'index'])->name('note.index');
 Route::post('note', [NoteController::class, 'store'])->name('note.store');
@@ -61,15 +62,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // Permissions
     Route::apiResource('permissions', PermissionController::class);
 
+    //Campings 
+    Route::apiResource('campings', App\Http\Controllers\CampingController::class);
+
     //Accommodations
     Route::apiResource('accommodations', AccommodationController::class);
 
     //Reviews
+    Route::get('/campings/{camping}/reviews', [ReviewController::class, 'reviewsByCamping']);
     Route::apiResource('reviews', ReviewController::class);
+    Route::post('/reviews', [ReviewController::class, 'store'])->middleware('auth:sanctum');
 
     //Reservations
     Route::apiResource('reservations', ReservationController::class);
-
 
     // Posts y Categorías
     Route::apiResource('posts', PostControllerAdvance::class);
@@ -78,6 +83,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile
     Route::get('/user', [ProfileController::class, 'user']);
     Route::put('/user', [ProfileController::class, 'update']);
+    Route::get('/user/reservations', [ProfileController::class, 'reservations']);
+    Route::get('/user/reviews', [ProfileController::class, 'reviews']);
 
     // Abilities (Roles → Permisos)
     Route::get('abilities', function(Request $request) {

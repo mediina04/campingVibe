@@ -21,8 +21,7 @@ class User extends Authenticatable implements HasMedia
         'name',
         'email',
         'password',
-        'surname1',
-        'surname2'
+        'surname1'
     ];
 
     /**
@@ -44,16 +43,26 @@ class User extends Authenticatable implements HasMedia
         'email_verified_at' => 'datetime',
     ];
 
+    // --- Relaciones necesarias ---
+
+    public function reservations()
+    {
+        // Ajusta el modelo y la clave foránea según tu estructura
+        return $this->hasMany(\App\Models\Reservation::class, 'user_id');
+    }
+
+    public function reviews()
+    {
+        // Ajusta el modelo y la clave foránea según tu estructura
+        return $this->hasMany(\App\Models\Review::class, 'user_id');
+    }
+
+    // --- Otros métodos existentes ---
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new UserResetPasswordNotification($token));
     }
-
-    public function assignaments()
-    {
-        return $this->hasMany(UserAssignment::class,'user_id');
-    }
-
 
     public function registerMediaCollections(): void
     {
@@ -62,13 +71,19 @@ class User extends Authenticatable implements HasMedia
             ->useFallbackPath(public_path('/images/placeholder.jpg'));
     }
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         if (env('RESIZE_IMAGE') === true) {
-
             $this->addMediaConversion('resized-image')
                 ->width(env('IMAGE_WIDTH', 300))
                 ->height(env('IMAGE_HEIGHT', 300));
         }
+    }
+
+    // --- Accesor para mostrar un solo apellido si lo necesitas en el frontend ---
+    public function getSurnameAttribute()
+    {
+        // Devuelve ambos apellidos juntos, o solo uno si falta el otro
+        return trim($this->surname1 . ' ' . $this->surname2);
     }
 }

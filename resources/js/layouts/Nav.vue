@@ -53,7 +53,13 @@
         </div>
     </nav>
 </template>
+<script setup>
 
+import useAuth from "@/composables/auth";
+import { authStore } from "../store/auth";
+
+const { processing, logout } = useAuth();
+</script>
 <style scoped>
 .navbar-custom {
     background-color: #00bf63;
@@ -92,10 +98,3 @@
 }
 </style>
 
-<script setup>
-
-import useAuth from "@/composables/auth";
-import { authStore } from "../store/auth";
-
-const { processing, logout } = useAuth();
-</script>

@@ -38,10 +38,11 @@ export default function useAuth() {
 
     const registerForm = reactive({
         name: '',
+        surname1: '', // <-- esto es clave
         email: '',
         password: '',
         password_confirmation: ''
-    })
+    });
 
     const submitLogin = async () => {
         if (processing.value) return
@@ -74,10 +75,10 @@ export default function useAuth() {
     }
 
     const submitRegister = async () => {
-        if (processing.value) return
+        if (processing.value) return;
 
-        processing.value = true
-        validationErrors.value = {}
+        processing.value = true;
+        validationErrors.value = {}; // <-- AQUÍ, antes de la petición
 
         await axios.post('/register', registerForm)
             .then(async response => {
@@ -93,10 +94,10 @@ export default function useAuth() {
             })
             .catch(error => {
                 if (error.response?.data) {
-                    validationErrors.value = error.response.data.errors
+                    validationErrors.value = error.response.data.errors;
                 }
             })
-            .finally(() => processing.value = false)
+            .finally(() => processing.value = false);
     }
 
     const submitForgotPassword = async () => {

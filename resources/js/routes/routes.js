@@ -118,24 +118,6 @@ export default [
             },
         ]
     },
-
-    {
-        path: '/app',
-        component: AuthenticatedUserLayout,
-        name: 'app',
-        beforeEnter: requireLogin,
-        meta: { breadCrumb: 'Dashboard' },
-        children: [
-            {
-                path: 'perfil',
-                name: 'user.profile',
-                component: () => import('../views/user/Profile.vue'),
-                meta: { breadCrumb: 'Perfil' }
-            },
-            // otras rutas como 'dashboard', 'admin.index', etc.
-        ]
-    },
-
     {
         path: '/admin',
         component: AuthenticatedLayout,
@@ -268,6 +250,99 @@ export default [
                     }
                 ]
             },
+            {
+                name: 'campings',
+                path: 'campings',
+                meta: { breadCrumb: 'Campings' },
+                children: [
+                    {
+                        name: 'campings.index',
+                        path: '',
+                        component: () => import('../views/admin/campings/Index.vue'),
+                        meta: { breadCrumb: 'Campings' }
+                    },
+                    {
+                        name: 'campings.create',
+                        path: 'create',
+                        component: () => import('../views/admin/campings/Create.vue'),
+                        meta: {
+                            breadCrumb: 'Crear Camping',
+                            linked: false
+                        }
+                    },
+                    {
+                        name: 'campings.edit',
+                        path: 'edit/:id',
+                        component: () => import('../views/admin/campings/Edit.vue'),
+                        meta: {
+                            breadCrumb: 'Editar Camping',
+                            linked: false
+                        }
+                    }
+                ]
+            },
+            {
+                name: 'reservas',
+                path: 'reservas',
+                meta: { breadCrumb: 'Reservas' },
+                children: [
+                    {
+                        name: 'reservas.index',
+                        path: '',
+                        component: () => import('../views/admin/reservas/Index.vue'),
+                        meta: { breadCrumb: 'Reservas' }
+                    },
+                    {
+                        name: 'reservas.create',
+                        path: 'reservas',
+                        component: () => import('../views/admin/reservas/Create.vue'),
+                        meta: {
+                            breadCrumb: 'Crear reservas',
+                            linked: false
+                        }
+                    },
+                    {
+                        name: 'reservas.edit',
+                        path: 'edit/:id',
+                        component: () => import('../views/admin/reservas/Edit.vue'),
+                        meta: {
+                            breadCrumb: 'Editar reservas',
+                            linked: false
+                        }
+                    }
+                ]
+            },
+            {
+                name: 'reseñas',
+                path: 'reseñas',
+                meta: { breadCrumb: 'Reseñas' },
+                children: [
+                    {
+                        name: 'reseñas.index',
+                        path: '',
+                        component: () => import('../views/admin/reseñas/Index.vue'),
+                        meta: { breadCrumb: 'Reseñas' }
+                    },
+                    {
+                        name: 'reseñas.create',
+                        path: 'create',
+                        component: () => import('../views/admin/reseñas/Create.vue'),
+                        meta: {
+                            breadCrumb: 'Crear reseñas',
+                            linked: false
+                        }
+                    },
+                    {
+                        name: 'reseñas.edit',
+                        path: 'edit/:id',
+                        component: () => import('../views/admin/reseñas/Edit.vue'),
+                        meta: {
+                            breadCrumb: 'Editar reseñas',
+                            linked: false
+                        }
+                    }
+                ]
+            },
 
             //TODO Organizar rutas
             {
@@ -296,4 +371,17 @@ export default [
         name: 'NotFound',
         component: () => import("../views/errors/404.vue"),
     },
+    {
+        path: '/app/perfil',
+        component: () => import('../layouts/EmptyProfile.vue'),
+        name: 'user.profile',
+        beforeEnter: requireLogin,
+        meta: { breadCrumb: 'Perfil' },
+        children: [
+            {
+                path: '',
+                component: () => import('../views/user/Profile.vue')
+            }
+        ]
+    }
 ];

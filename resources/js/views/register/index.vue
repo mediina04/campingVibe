@@ -27,9 +27,20 @@
       </div>
       <form @submit.prevent="submitRegister" class="register-form">
         <input v-model="registerForm.name" type="text" class="input-field" placeholder="Nombre" required autofocus autocomplete="name">
-        <input v-model="registerForm.surname" type="text" class="input-field" placeholder="Apellidos" required autocomplete="family-name">
+        <div v-if="validationErrors.name" class="error">{{ validationErrors.name[0] }}</div>
+
+        <input v-model="registerForm.surname1" type="text" class="input-field" placeholder="Primer apellido" required autocomplete="family-name">
+        <div v-if="validationErrors.surname1" class="error">{{ validationErrors.surname1[0] }}</div>
+
         <input v-model="registerForm.email" type="email" class="input-field" placeholder="Email" required autocomplete="username">
+        <div v-if="validationErrors.email" class="error">{{ validationErrors.email[0] }}</div>
+
         <input v-model="registerForm.password" type="password" class="input-field" placeholder="Contraseña" required autocomplete="new-password">
+        <div v-if="validationErrors.password" class="error">{{ validationErrors.password[0] }}</div>
+
+        <input v-model="registerForm.password_confirmation" type="password" class="input-field" placeholder="Repite la contraseña" required autocomplete="new-password">
+        <div v-if="validationErrors.password_confirmation" class="error">{{ validationErrors.password_confirmation[0] }}</div>
+
         <button class="register-button" :class="{'opacity-50': processing}" :disabled="processing">
           SIGN UP
         </button>

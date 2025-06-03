@@ -26,5 +26,6 @@
 </head>
 <body class="font-sans antialiased" id="app">
     <router-view></router-view>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBwoXNHQAsvDqvdG3qJ0-MGYieC85E8T8E"></script>
 </body>
 </html>
